@@ -5,3 +5,8 @@ __pycache__/
 .env
 mlruns/
 .vscode/
+__pycache__/
+*.pyc
+.ipynb_checkpoints
+.env
+.DS_Store
