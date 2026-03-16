@@ -1,12 +1,11 @@
 __pycache__/
 *.pyc
-*.pkl
 *.log
 .env
 mlruns/
 .vscode/
 __pycache__/
 *.pyc
-.ipynb_checkpoints
+*.ipynb_checkpoints
 .env
 .DS_Store
