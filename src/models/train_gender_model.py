@@ -1,12 +1,12 @@
 import pickle
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 
 from src.data.preprocess_users import load_users_data
 from src.features.gender_features import prepare_features
@@ -36,8 +36,11 @@ preprocessor = ColumnTransformer(
             "name_tfidf",
             TfidfVectorizer(
                 analyzer="char",
-                ngram_range=(2, 5),
-                lowercase=True
+                ngram_range=(2, 4),       # Reduced from (2,5) — less memorization
+                lowercase=True,
+                min_df=2,                 # Ignore very rare n-grams (reduces overfitting)
+                max_features=5000,        # Cap features to avoid memorizing unique names
+                sublinear_tf=True         # Log-scale TF to reduce dominance of frequent n-grams
             ),
             "name"
         ),
@@ -53,7 +56,10 @@ preprocessor = ColumnTransformer(
 # Build pipeline
 model = Pipeline([
     ("features", preprocessor),
-    ("classifier", LinearSVC(C=1.0))
+    ("classifier", LinearSVC(
+        C=0.1,          # Lower C = stronger regularization = less overfitting
+        max_iter=2000
+    ))
 ])
 
 
@@ -61,16 +67,22 @@ model = Pipeline([
 model.fit(X_train, y_train)
 
 
-# Evaluate
+# Evaluate on test set
 preds = model.predict(X_test)
-
 accuracy = accuracy_score(y_test, preds)
+print("Test Accuracy:", accuracy)
+print("\nClassification Report:")
+print(classification_report(y_test, preds))
 
-print("Model Accuracy:", accuracy)
+# Cross-validation to check generalization (5-fold)
+# If CV score ≈ test accuracy, model is generalizing well
+cv_scores = cross_val_score(model, X, y, cv=5, scoring="accuracy")
+print(f"\nCross-Val Accuracy: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
 
 
-# Save trained model
-with open("models/gender_model.pkl", "wb") as f:
+# Overwrite existing model file (no new file created)
+model_path = "models/gender_model.pkl"
+with open(model_path, "wb") as f:
     pickle.dump(model, f)
 
-print("Model saved at models/gender_model.pkl")
+print(f"\nModel updated at {model_path}")
