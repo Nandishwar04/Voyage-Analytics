@@ -7,3 +7,4 @@ mlflow
 matplotlib
 seaborn
 joblib
+xgboost
