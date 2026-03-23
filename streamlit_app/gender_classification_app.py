@@ -1,8 +1,9 @@
 import streamlit as st
 import requests
 import pandas as pd 
+import os 
 
-API_BASE = "http://127.0.0.1:5000"
+API_BASE = os.environ.get("FLASK_API_URL", "http://127.0.0.1:5000")
 
 st.set_page_config(
     page_title="ML Prediction Platform",
